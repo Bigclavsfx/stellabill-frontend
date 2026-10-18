@@ -1,4 +1,6 @@
-import { Navigate, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, Routes, Route, useLocation } from "react-router-dom";
+import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import TransitionLayout from "./components/TransitionLayout";
 import Dashboard from "./pages/Dashboard";
@@ -22,12 +24,29 @@ import BrandPack from "./pages/BrandPack";
 import Settings from "./pages/Settings";
 import DesignTokens from "./pages/DesignTokens";
 
+function ScrollToHash() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (hash) {
+      const el = document.getElementById(hash.slice(1));
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
+    window.scrollTo(0, 0);
+  }, [pathname, hash]);
+  return null;
+}
+
 function App() {
   return (
+    <>
+    <ScrollToHash />
     <Routes>
       {/* 1. Public Routes (No Layout) */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/landing" element={<Landing />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/landing" element={<Navigate to="/" replace />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route
         path="/about-prepaid-balances"
@@ -68,8 +87,9 @@ function App() {
       </Route>
 
       {/* 3. Catch-all redirect - Sends users back to the dashboard for safety */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 }
 

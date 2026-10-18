@@ -467,7 +467,10 @@ export default function HelpSidebar({
                   onClick={() => openArticle(s)}
                 >
                   <div className="help-sidebar__article-meta">
-                    <CATEGORY_ICONS[s.category] size={12} aria-hidden="true" />
+                    {(() => {
+                      const SimilarIcon = CATEGORY_ICONS[s.category];
+                      return <SimilarIcon size={12} aria-hidden="true" />;
+                    })()}
                     <span>{s.category}</span>
                   </div>
                   <h3 className="help-sidebar__article-title">{s.title}</h3>
