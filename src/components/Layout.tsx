@@ -8,6 +8,7 @@ import KeyboardChordIndicator from "./KeyboardChordIndicator";
 import HelpSidebar from "./help/HelpSidebar";
 import ChangelogPanel from "./changelog/ChangelogPanel";
 import FocusOrderVisualizer from "./FocusOrderVisualizer";
+import RouteErrorBoundary from "./RouteErrorBoundary";
 import { LayoutContextType } from "../hooks/useCommandScope";
 import "../styles/sidebar.css";
 
@@ -436,7 +437,9 @@ export default function Layout() {
         {/* Main Content Area */}
         <main className="app-layout__main">
           <div className="app-layout__content">
-            <Outlet context={layoutContext} />
+            <RouteErrorBoundary pathname={location.pathname}>
+              <Outlet context={layoutContext} />
+            </RouteErrorBoundary>
           </div>
 
           {/* Subtle background glow */}
