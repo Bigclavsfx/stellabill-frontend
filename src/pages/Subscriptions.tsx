@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import PauseSubscriptionModal from "../components/PauseSubscriptionModal";
 import CancelSubscriptionModal from "../components/CancelSubscriptionModal";
+import TopUpModal from "../components/TopUpModal";
+import PrepaidBalanceCard from "../components/PrepaidBalance";
 import { subscriptions, ApiError } from "../api/client";
 import { Subscription } from "@/types/subscription";
 import UsageThisPeriod from "../components/UsageThisPeriod";
@@ -390,6 +392,7 @@ export default function Subscriptions() {
 
 	const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
 	const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+	const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
 	const [isActionLoading, setIsActionLoading] = useState(false);
 	const [pauseError, setPauseError] = useState<SubscriptionActionError | null>(null);
 	const [cancelError, setCancelError] = useState<SubscriptionActionError | null>(null);
@@ -492,6 +495,30 @@ export default function Subscriptions() {
 	} = useRefresh({
 		onRefresh: fetchSubscriptions
 	});
+
+
+	const handleTopUpConfirm = useCallback(
+		async (amount: number) => {
+			await new Promise((resolve) => setTimeout(resolve, 300));
+			if (!selectedId) return;
+
+			setData((prev) =>
+				prev.map((sub) => {
+					if (sub.id !== selectedId) return sub;
+					const currentNum = parseFloat(sub.prepaidBalance) || 0;
+					const updatedNum = currentNum + amount;
+					const coverageCount = sub.price > 0 ? Math.floor(updatedNum / sub.price) : 0;
+					const coverageStr = `~${coverageCount} payment${coverageCount === 1 ? "" : "s"}`;
+					return {
+						...sub,
+						prepaidBalance: `${updatedNum} ${sub.currency}`,
+						coverage: coverageStr,
+					};
+				}),
+			);
+		},
+		[selectedId],
+	);
 
 	const handleViewFullUsage = () => {
 		/* TODO: Navigate to full usage page */
@@ -805,6 +832,15 @@ export default function Subscriptions() {
 					</div>
 				</div>
 
+
+				<div style={{ marginTop: "1.5rem" }}>
+					<PrepaidBalanceCard
+						balance={parseFloat(selectedSub.prepaidBalance) || 0}
+						maxBalance={Math.max(parseFloat(selectedSub.prepaidBalance) || 0, selectedSub.price * 3, 30)}
+						paymentAmount={selectedSub.price}
+						onTopUp={() => setIsTopUpModalOpen(true)}
+					/>
+				</div>
 				<div style={{ marginTop: "1.5rem" }}>
 					<UsageThisPeriod
 						billingPeriod={usageData.billingPeriod}
@@ -814,6 +850,17 @@ export default function Subscriptions() {
 					/>
 				</div>
 
+
+				<TopUpModal
+					isOpen={isTopUpModalOpen}
+					onClose={() => setIsTopUpModalOpen(false)}
+					planName={selectedSub.planName}
+					planPrice={selectedSub.price}
+					currentBalance={parseFloat(selectedSub.prepaidBalance) || 0}
+					walletBalance={150}
+					currency={selectedSub.currency}
+					onConfirm={handleTopUpConfirm}
+				/>
 				<PauseSubscriptionModal
 					isOpen={isPauseModalOpen}
 					onClose={() => {
