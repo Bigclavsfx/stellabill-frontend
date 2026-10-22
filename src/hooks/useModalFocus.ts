@@ -4,7 +4,11 @@ interface UseModalFocusOptions {
   isOpen: boolean;
   onClose: () => void;
   initialFocusRef?: RefObject<HTMLElement>;
-  fallbackFocusRef?: RefObject<HTMLElement>;
+  /**
+   * Whether the Escape key should trigger `onClose`. Defaults to `true`.
+   * Set to `false` to prevent dismissal while an action is in flight.
+   */
+  closeOnEscape?: boolean;
 }
 
 const modalStack: symbol[] = [];
@@ -48,21 +52,21 @@ const getFocusableElements = (container: HTMLElement) =>
  * A reusable hook to manage accessibility for modals.
  *
  * Features:
- * - Keeps keyboard focus within the top-most modal.
- * - Restores focus to the previously active element when it remains in the document.
- * - Calls onClose for Escape only on the top-most modal.
- * - Focuses a specific element or the first visible focusable element when opened.
+ * - Focus Trapping: Keeps focus within the modal during tabbing.
+ * - Focus Restoration: Returns focus to the previously active element on close.
+ * - Escape Key Support: Automatically calls the onClose handler when Escape is pressed.
+ * - Initial Focus: Focuses a specific element or the first focusable element when opened.
  *
  * @param modalRef Reference to the modal's container element.
  * @param options Configuration options for focus management.
  * @param options.isOpen Boolean indicating if the modal is currently open.
  * @param options.onClose Callback function to close the modal (triggered by Escape).
  * @param options.initialFocusRef Optional reference to an element that should be focused first.
- * @param options.fallbackFocusRef Optional focus target if the previous element was removed.
+ * @param options.closeOnEscape Whether Escape should close the modal (default true).
  */
 export function useModalFocus(
   modalRef: RefObject<HTMLElement>,
-  { isOpen, onClose, initialFocusRef, fallbackFocusRef }: UseModalFocusOptions
+  { isOpen, onClose, initialFocusRef, closeOnEscape = true }: UseModalFocusOptions
 ) {
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const modalIdRef = useRef(Symbol('modal'));
@@ -107,14 +111,11 @@ export function useModalFocus(
   useEffect(() => {
     if (!isOpen) return;
 
-    const modalId = modalIdRef.current;
-    modalStack.push(modalId);
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (modalStack[modalStack.length - 1] !== modalId) return;
-
-      if (event.key === 'Escape') {
-        onCloseRef.current();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (closeOnEscape) {
+          onClose();
+        }
         return;
       }
 
@@ -141,10 +142,6 @@ export function useModalFocus(
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      const stackIndex = modalStack.lastIndexOf(modalId);
-      if (stackIndex !== -1) modalStack.splice(stackIndex, 1);
-    };
-  }, [isOpen, modalRef]);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, modalRef, closeOnEscape]);
 }
