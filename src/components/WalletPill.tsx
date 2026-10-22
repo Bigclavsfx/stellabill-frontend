@@ -1,26 +1,26 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { UNSAFE_NavigationContext } from 'react-router-dom';
 import WalletDropdown from './WalletDropdown';
-import WalletConnectModal from './WalletConnectModal';
-import type { ConnectionState } from './ConnectButton';
-import { ChevronDown, Globe } from 'lucide-react';
+import { ChevronDown, Globe, AlertTriangle } from 'lucide-react';
+import {
+  getExpectedNetwork,
+  isNetworkMismatch,
+  normalizeNetwork,
+  type StellarNetwork,
+} from '../config/network';
 
 interface WalletPillProps {
   address: string;
   onDisconnect: () => void;
-  onSwitchWallet?: () => void;
-  onOpenHistory?: () => void;
-  onConnect?: (address: string) => void;
-  network?: 'Mainnet' | 'Testnet';
+  network?: StellarNetwork | 'testnet' | 'mainnet' | 'public' | (string & {});
+  expectedNetwork?: StellarNetwork | 'testnet' | 'mainnet' | 'public' | (string & {});
 }
 
 const WalletPill: React.FC<WalletPillProps> = ({
   address,
   onDisconnect,
-  onSwitchWallet,
-  onOpenHistory,
-  onConnect,
-  network = 'Testnet',
+  network,
+  expectedNetwork,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentAddress, setCurrentAddress] = useState(address);
@@ -32,6 +32,14 @@ const WalletPill: React.FC<WalletPillProps> = ({
   useEffect(() => {
     setCurrentAddress(address);
   }, [address]);
+
+  const resolvedExpectedNetwork = expectedNetwork
+    ? normalizeNetwork(expectedNetwork)
+    : getExpectedNetwork();
+  const resolvedWalletNetwork = network
+    ? normalizeNetwork(network)
+    : resolvedExpectedNetwork;
+  const hasMismatch = isNetworkMismatch(resolvedWalletNetwork, resolvedExpectedNetwork);
 
   // Truncate address: GABC...XYZ9
   const truncatedAddress = currentAddress.length > 10 
@@ -116,11 +124,23 @@ const WalletPill: React.FC<WalletPillProps> = ({
       >
         {/* Network Indicator */}
         <div className="flex items-center gap-1.5 px-1.5 py-1 bg-black/20 rounded-lg">
-           <span className={`w-2 h-2 rounded-full ${network === 'Mainnet' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.5)]'}`} />
+           <span className={`w-2 h-2 rounded-full ${resolvedWalletNetwork === 'Mainnet' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.5)]'}`} />
            <Globe className="w-3 h-3 text-slate-500" />
         </div>
 
         <span className="tracking-tight">{truncatedAddress}</span>
+
+        {hasMismatch && (
+          <span
+            role="status"
+            aria-label={`Network mismatch: wallet is on ${resolvedWalletNetwork}, expected ${resolvedExpectedNetwork}`}
+            title={`Network mismatch: wallet is on ${resolvedWalletNetwork}, expected ${resolvedExpectedNetwork}`}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-[10px] font-bold text-amber-300 uppercase tracking-wider"
+          >
+            <AlertTriangle className="w-3 h-3 text-amber-400" aria-hidden="true" />
+            <span>Wrong network</span>
+          </span>
+        )}
         
         <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -130,15 +150,8 @@ const WalletPill: React.FC<WalletPillProps> = ({
         address={currentAddress} 
         onClose={() => setIsOpen(false)} 
         onDisconnect={onDisconnect}
-        onSwitchWallet={handleSwitchWallet}
-        onOpenHistory={handleOpenHistory}
-      />
-
-      <WalletConnectModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        onConnectFreighter={handleFreighterConnect}
-        connectionState={connectionState}
+        network={resolvedWalletNetwork}
+        expectedNetwork={resolvedExpectedNetwork}
       />
     </div>
   );
