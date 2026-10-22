@@ -179,6 +179,27 @@ export default function ApiKeysSettings({
 
   return (
     <div>
+      <div
+        role="status"
+        aria-live="polite"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {copyFeedback
+          ? copyFeedback.success
+            ? 'API key copied to clipboard'
+            : 'Copy failed — select and copy manually'
+          : ''}
+      </div>
       <div style={{ marginBottom: '2rem' }}>
         <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.5rem' }}>
           API Keys & Security
@@ -286,7 +307,7 @@ export default function ApiKeysSettings({
                   }}>
                     {key.key}
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <button
                       onClick={() => copyToClipboard(key.key)}
                       style={{
@@ -304,6 +325,16 @@ export default function ApiKeysSettings({
                       <Copy size={12} />
                       Copy
                     </button>
+                    {copyFeedback?.keyId === key.id && (
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          color: copyFeedback.success ? '#10b981' : '#ef4444',
+                        }}
+                      >
+                        {copyFeedback.success ? 'Copied!' : 'Copy failed — select and copy manually'}
+                      </span>
+                    )}
                   </div>
                 </td>
 
@@ -348,6 +379,7 @@ export default function ApiKeysSettings({
 
                 <td style={{ padding: '1rem 1.5rem', verticalAlign: 'top', textAlign: 'right' }}>
                   <button
+                    ref={(el) => { if (el) revokeTriggerRefs.current.set(key.id, el) }}
                     onClick={() => setShowRevokeConfirmation(key.id)}
                     style={{
                       display: 'inline-flex',
@@ -708,7 +740,7 @@ export default function ApiKeysSettings({
             </div>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Revoke Confirmation Modal */}
       {showRevokeConfirmation && keyToRevoke && (
@@ -768,6 +800,7 @@ export default function ApiKeysSettings({
                 </label>
                 <input
                   id="revoke-confirm-input"
+                  ref={revokeConfirmInputRef}
                   type="text"
                   dir="auto"
                   value={revokeConfirmationText}
@@ -845,8 +878,8 @@ export default function ApiKeysSettings({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   )
 }
