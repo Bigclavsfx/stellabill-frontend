@@ -1,24 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Copy, ExternalLink, LogOut, Check, CreditCard } from 'lucide-react';
-import { copyToClipboard } from '../utils/clipboard';
+import React, { useState } from 'react';
+import { Copy, ExternalLink, LogOut, Check, CreditCard, Clock } from 'lucide-react';
 
 interface WalletDropdownProps {
   isOpen: boolean;
   address: string;
   onClose: () => void;
   onDisconnect: () => void;
+  onSwitchWallet?: () => void;
   onOpenHistory?: () => void;
 }
 
-const WalletDropdown: React.FC<WalletDropdownProps> = ({ isOpen, address, onClose, onDisconnect, onOpenHistory }) => {
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
-  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-    };
-  }, []);
+const WalletDropdown: React.FC<WalletDropdownProps> = ({ isOpen, address, onClose, onDisconnect, onSwitchWallet, onOpenHistory }) => {
+  const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
@@ -35,6 +28,15 @@ const WalletDropdown: React.FC<WalletDropdownProps> = ({ isOpen, address, onClos
   const handleDisconnect = () => {
     onDisconnect();
     onClose();
+  };
+
+  const handleSwitchWallet = () => {
+    onClose();
+    if (onSwitchWallet) {
+      onSwitchWallet();
+    } else {
+      onDisconnect();
+    }
   };
 
   return (
@@ -88,7 +90,7 @@ const WalletDropdown: React.FC<WalletDropdownProps> = ({ isOpen, address, onClos
 
           <button
             className="w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all group"
-            onClick={onClose}
+            onClick={handleSwitchWallet}
           >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-slate-800 rounded-lg group-hover:bg-cyan-500/10 transition-colors">
@@ -107,7 +109,7 @@ const WalletDropdown: React.FC<WalletDropdownProps> = ({ isOpen, address, onClos
           >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-slate-800 rounded-lg group-hover:bg-cyan-500/10 transition-colors">
-                <CreditCard className="w-4 h-4 text-slate-400 group-hover:text-cyan-400" />
+                <Clock className="w-4 h-4 text-slate-400 group-hover:text-cyan-400" />
               </div>
               Wallet History
             </div>

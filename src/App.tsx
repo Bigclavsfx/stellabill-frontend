@@ -22,6 +22,7 @@ const Pricing = lazy(() => import("./pages/Pricing"));
 const BrandPack = lazy(() => import("./pages/BrandPack"));
 const Settings = lazy(() => import("./pages/Settings"));
 const DesignTokens = lazy(() => import("./pages/DesignTokens"));
+const WalletDetailView = lazy(() => import("./pages/WalletDetailView"));
 
 const ONBOARDING_BUSINESS_KEY = "onboardingBusiness";
 const ONBOARDING_PAYOUT_KEY = "onboardingPayout";
@@ -100,6 +101,7 @@ function App() {
           <Route path="/subscriptions" element={<Subscriptions />} />
           <Route path="/subscriptions/:id" element={<SubscriptionDetail />} />
           <Route path="/subscriptions/:id/usage" element={<UsageBilling />} />
+          <Route path="/wallet" element={<WalletDetailView />} />
           <Route path="/settings" element={<Settings />} />
           {/* Development/UI Kit */}
           <Route path="/brand" element={<BrandPack />} />
