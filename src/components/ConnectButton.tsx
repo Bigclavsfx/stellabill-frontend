@@ -63,9 +63,8 @@ const ConnectButton: React.FC<ConnectButtonProps> = ({
     onDisconnect?.();
   };
 
-  const handleSwitchWallet = () => {
-    handleDisconnect();
-    setErrorMessage('');
+  const handleRetry = () => {
+    clearError();
     setIsModalOpen(true);
   };
 
